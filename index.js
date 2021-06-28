@@ -66,16 +66,18 @@ function diffNewPosts(oldPosts, posts) {
 
 function logNewPosts(posts) {
   if (posts.length) {
-    console.log(`${posts.length} New Posts!\n`)
-  }
-  for (const post of posts) {
-    const { title, upvotes, downvotes } = post;
-    
-    console.log(
-      `Title: ${title}\n`,
-      `Upvotes: ${upvotes}\n`,
-      `Downvotes: ${downvotes}\n`,
-      );
+    console.log(`${posts.length} New Posts!\n`);
+    for (const post of posts) {
+      const { title, upvotes, downvotes } = post;
+      
+      console.log(
+        `Title: ${title}\n`,
+        `Upvotes: ${upvotes}\n`,
+        `Downvotes: ${downvotes}\n`,
+        );
+    }
+  } else {
+    console.log('No new posts');
   }
 }
 
@@ -100,7 +102,7 @@ function logOutdatedPosts(posts) {
 }
 
 function logVoteChanges(oldPosts, posts) {
-  console.log('These posts have had their votes changed\n');
+  let showedLogMessage = false;
   for (const post of posts) {
     for (const oldPost of oldPosts) {
       if (post.id === oldPost.id) {
@@ -108,6 +110,10 @@ function logVoteChanges(oldPosts, posts) {
         const downvoteChange = post.downvotes - oldPost.downvotes;
 
         if (upvoteChange !== 0 && downvoteChange !== 0) {
+          if (!showedLogMessage) {
+            console.log('These posts have had their votes changed\n');
+            showedLogMessage = true;
+          }
           console.log(
             `${post.title}\n`,
             `Upvotes: ${upvoteChange > 0 ? `+${upvoteChange}` : upvoteChange}\n`,
