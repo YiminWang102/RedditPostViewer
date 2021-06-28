@@ -77,12 +77,10 @@ function diffOutdatedPosts(oldPosts, posts) {
 
 function logOutdatedPosts(posts) {
   if (posts.length) {
-    const logText = `
-    These posts are no longer in the top:
-    ${posts.map(post => `${post.title}\n`)}
-  `;
-
-  console.log(logText);
+    console.log('These posts are no longer in the top:');
+    for (const post of posts) {
+      console.log(`${post.title}\n`);
+    }
   }
 }
 
@@ -108,13 +106,48 @@ function logVoteChanges(oldPosts, posts) {
   }
 }
 
-async function main() {
-  const url = 'https://www.reddit.com/r/popular.json';
-  const res = await fetch(url);
-  const text = await res.text();
-  const body = JSON.parse(text);
+async function getPosts(options = {
+  subreddit: 'popular',
+  numPosts: 200,
+}) {
+  const { subreddit, numPosts } = options;
 
-  const posts = body.data.children.map(parsePost);
+  const baseUrl = `https://www.reddit.com/r/${subreddit}.json`;
+  let posts = [];
+  let after = '';
+  let count = 0;
+
+  while (count < numPosts) {
+    let url;
+
+    if (count === 0) {
+      url = baseUrl;
+    } else {
+      url = `${baseUrl}?count=${count}&after=${after}`;
+    }
+
+    const res = await fetch(url);
+    const text = await res.text();
+    const body = JSON.parse(text);
+    const newPosts = body.data.children.map(parsePost);
+
+    const lastPost = newPosts.slice(-1)[0];
+    after = lastPost.id;
+    count += 25;
+
+    if (count > numPosts) {
+      const postsToConcat = newPosts.slice(count - numPosts);
+      posts = posts.concat(postsToConcat);
+    } else {
+      posts = posts.concat(newPosts);
+    }
+  }
+
+  return posts;
+}
+
+async function main() {
+  const posts = await getPosts();
   const oldPosts = retrievePosts();
 
   const newPosts = diffNewPosts(oldPosts, posts);
