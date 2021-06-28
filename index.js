@@ -22,16 +22,110 @@ function parsePost(post) {
   }
 }
 
+function savePosts(posts) {
+  const fileName = 'r_popular_top_75.json';
+  const stringifiedPosts = JSON.stringify(posts, null, 2)
+  fs.writeFileSync(fileName, stringifiedPosts);
+}
+
+function retrievePosts() {
+  const fileName = 'r_popular_top_75.json';
+
+  let posts = [];
+  if (fs.existsSync(fileName)) {
+    const data = fs.readFileSync(fileName, 'utf8');
+    posts = JSON.parse(data);
+  }
+
+  return posts;
+}
+
+function diffNewPosts(oldPosts, posts) {
+  const newPosts = [];
+
+  for (const post of posts) {
+    if (!oldPosts.some(oldPost => oldPost.id === post.id)) {
+      newPosts.push(post);
+    }
+  }
+  return newPosts;
+}
+
+function logNewPosts(posts) {
+  for (const post of posts) {
+    const { title, upvotes, downvotes } = post;
+    const logText = `
+      New Post!
+      Title: ${title}
+      Upvotes: ${upvotes}, Downvotes: ${downvotes}
+    `;
+
+    console.log(logText);
+  }
+}
+
+function diffOutdatedPosts(oldPosts, posts) {
+  const outdatedPosts = [];
+
+  for (const oldpost of oldPosts) {
+    if (!posts.some(post => post.id === oldpost.id)) {
+      outdatedPosts.push(oldpost);
+    }
+  }
+  return outdatedPosts;
+}
+
+function logOutdatedPosts(posts) {
+  if (posts.length) {
+    const logText = `
+    These posts are no longer in the top:
+    ${posts.map(post => `${post.title}\n`)}
+  `;
+
+  console.log(logText);
+  }
+}
+
+function logVoteChanges(oldPosts, posts) {
+  console.log('These posts have had their votes changed');
+  for (const post of posts) {
+    for (const oldPost of oldPosts) {
+      if (post.id === oldPost.id) {
+        const upvoteChange = post.upvotes - oldPost.upvotes;
+        const downvoteChange = post.downvotes - oldPost.downvotes;
+
+        const logText = `
+          ${post.title}
+          Upvotes: ${upvoteChange > 0 ? `+${upvoteChange}` : upvoteChange}
+          Downvotes: ${downvoteChange > 0 ? `+${downvoteChange}` : downvoteChange}
+        `;
+
+        if (upvoteChange !== 0 && downvoteChange !== 0) {
+          console.log(logText);
+        }
+      }
+    }
+  }
+}
+
 async function main() {
   const url = 'https://www.reddit.com/r/popular.json';
   const res = await fetch(url);
   const text = await res.text();
   const body = JSON.parse(text);
 
-  const posts = body.data.children;
-  const parsedPosts = posts.map(parsePost);
+  const posts = body.data.children.map(parsePost);
+  const oldPosts = retrievePosts();
 
-  console.log(JSON.stringify(parsedPosts, null, 2));
+  const newPosts = diffNewPosts(oldPosts, posts);
+  logNewPosts(newPosts);
+
+  const outdatedPosts = diffOutdatedPosts(oldPosts, posts);
+  logOutdatedPosts(outdatedPosts);
+
+  logVoteChanges(oldPosts, posts);
+
+  await savePosts(posts);
 }
 
 main();
