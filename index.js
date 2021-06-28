@@ -2,6 +2,9 @@ const _ = require('lodash');
 const fetch = require('node-fetch');
 const fs = require('fs');
 
+const DEFAULT_NUMPOSTS = 75;
+const DEFAULT_SUBREDDIT = 'popular';
+
 function calculateDowvotes(upvotes, ratio) {
   const downvotes = (upvotes * (1 - ratio)) / ratio;
   return Math.ceil(downvotes);
@@ -22,14 +25,24 @@ function parsePost(post) {
   }
 }
 
-function savePosts(posts) {
-  const fileName = 'r_popular_top_75.json';
+function savePosts(posts, options) {
+  const {
+    subreddit,
+    numPosts,
+  } = options;
+
+  const fileName = `r_${subreddit}_${numPosts}.json`;
   const stringifiedPosts = JSON.stringify(posts, null, 2)
   fs.writeFileSync(fileName, stringifiedPosts);
 }
 
-function retrievePosts() {
-  const fileName = 'r_popular_top_75.json';
+function retrievePosts(options) {
+  const {
+    subreddit,
+    numPosts,
+  } = options;
+
+  const fileName = `r_${subreddit}_${numPosts}.json`;
 
   let posts = [];
   if (fs.existsSync(fileName)) {
@@ -146,9 +159,26 @@ async function getPosts(options = {
   return posts;
 }
 
+function parseArgs(argv) {
+  const options = {
+    subreddit: DEFAULT_SUBREDDIT,
+    numPosts: DEFAULT_NUMPOSTS,
+  };
+
+  const args = argv.slice(2);
+  for (const arg of args) {
+    [key, value] = arg.split('=');
+    options[key] = value;    
+  }
+
+  return options;
+}
+
 async function main() {
-  const posts = await getPosts();
-  const oldPosts = retrievePosts();
+  const options = parseArgs(process.argv);
+
+  const posts = await getPosts(options);
+  const oldPosts = retrievePosts(options);
 
   const newPosts = diffNewPosts(oldPosts, posts);
   logNewPosts(newPosts);
@@ -158,7 +188,7 @@ async function main() {
 
   logVoteChanges(oldPosts, posts);
 
-  await savePosts(posts);
+  await savePosts(posts, options);
 }
 
 main();
