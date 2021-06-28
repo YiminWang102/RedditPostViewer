@@ -149,7 +149,7 @@ async function getPosts(options = {
     count += 25;
 
     if (count > numPosts) {
-      const postsToConcat = newPosts.slice(count - numPosts);
+      const postsToConcat = newPosts.slice(0, numPosts % 25);
       posts = posts.concat(postsToConcat);
     } else {
       posts = posts.concat(newPosts);
