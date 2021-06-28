@@ -65,15 +65,17 @@ function diffNewPosts(oldPosts, posts) {
 }
 
 function logNewPosts(posts) {
+  if (posts.length) {
+    console.log(`${posts.length} New Posts!\n`)
+  }
   for (const post of posts) {
     const { title, upvotes, downvotes } = post;
-    const logText = `
-      New Post!
-      Title: ${title}
-      Upvotes: ${upvotes}, Downvotes: ${downvotes}
-    `;
-
-    console.log(logText);
+    
+    console.log(
+      `Title: ${title}\n`,
+      `Upvotes: ${upvotes}\n`,
+      `Downvotes: ${downvotes}\n`,
+      );
   }
 }
 
@@ -98,25 +100,32 @@ function logOutdatedPosts(posts) {
 }
 
 function logVoteChanges(oldPosts, posts) {
-  console.log('These posts have had their votes changed');
+  console.log('These posts have had their votes changed\n');
   for (const post of posts) {
     for (const oldPost of oldPosts) {
       if (post.id === oldPost.id) {
         const upvoteChange = post.upvotes - oldPost.upvotes;
         const downvoteChange = post.downvotes - oldPost.downvotes;
 
-        const logText = `
-          ${post.title}
-          Upvotes: ${upvoteChange > 0 ? `+${upvoteChange}` : upvoteChange}
-          Downvotes: ${downvoteChange > 0 ? `+${downvoteChange}` : downvoteChange}
-        `;
-
         if (upvoteChange !== 0 && downvoteChange !== 0) {
-          console.log(logText);
+          console.log(
+            `${post.title}\n`,
+            `Upvotes: ${upvoteChange > 0 ? `+${upvoteChange}` : upvoteChange}\n`,
+            `Downvotes: ${downvoteChange > 0 ? `+${downvoteChange}` : downvoteChange}\n`,
+          );
         }
       }
     }
   }
+}
+
+function logOptions(options) {
+  const {
+    subreddit,
+    numPosts,
+  } = options;
+
+  console.log(`Getting the top ${numPosts} posts from r/${subreddit}\n`);
 }
 
 async function getPosts(options = {
@@ -176,15 +185,19 @@ function parseArgs(argv) {
 
 async function main() {
   const options = parseArgs(process.argv);
+  logOptions(options);
+  await new Promise(r => setTimeout(r, 1000));
 
   const posts = await getPosts(options);
   const oldPosts = retrievePosts(options);
 
   const newPosts = diffNewPosts(oldPosts, posts);
   logNewPosts(newPosts);
+  await new Promise(r => setTimeout(r, 1000));
 
   const outdatedPosts = diffOutdatedPosts(oldPosts, posts);
   logOutdatedPosts(outdatedPosts);
+  await new Promise(r => setTimeout(r, 1000));
 
   logVoteChanges(oldPosts, posts);
 
