@@ -29,3 +29,4 @@ e.g. `npm start -- subreddit=askreddit numPosts=25`
 * Reddit only returns up to 25 results at a time. To get the next 25, you need to specify that they come after the 25th post that came from the previous request. Tho unlikely, this could potentially result in a race condition where the ranking of a post changes in bewteen requests and it slips through.
 * I didn't optimize for performance, so some functionality like diffing new/outdated posts can be slow for big numbers of posts. 
 * For ease of implementation, each number of top posts per subreddit is separate. Meaning if you run the program for top 50 posts of r/popular, it will not use the top 75 posts of r/popular to figure out new/old posts or vote tally changes.
+* Reddit does not return the actual number of downvotes a post has. They give a "upvote_ratio" instead which can be used to deduce the number of downvotes, but it is no exact. 
